@@ -2,132 +2,94 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
-<title>Investment Life Simulator v0.2</title>
+<title>Investment Life Simulator</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="startScreen" class="start-screen">
-  <div class="start-inner">
+<section id="startScreen" class="start-screen">
+  <div class="start-card">
     <div class="eyebrow">INVESTMENT LIFE SIMULATOR</div>
     <h1>投資人生<br>シミュレーター</h1>
-    <p class="start-copy">あなたの投資人生を2000年から始めます。</p>
-    <div class="start-card">
-      <h2>初期資金を選択</h2>
-      <div class="capital-options">
-        <button class="capital-btn" data-capital="500000">50万円</button>
-        <button class="capital-btn" data-capital="1000000">100万円</button>
-        <button class="capital-btn custom" data-custom="true">自由入力</button>
-      </div>
-      <div id="customWrap" class="custom-wrap hidden">
-        <label for="customCapital">初期資金（円）</label>
-        <input id="customCapital" type="number" min="10000" step="10000" value="1000000" inputmode="numeric">
-      </div>
-      <button id="startBtn" class="start-btn" disabled>ゲームを開始</button>
+    <p>ゲーム開始時の初期資金を決めてください。</p>
+    <div class="capital-grid">
+      <button class="capital" data-capital="500000">50万円</button>
+      <button class="capital" data-capital="1000000">100万円</button>
+      <button class="capital" id="customButton">自由入力</button>
+    </div>
+    <div id="customArea" class="hidden">
+      <label for="customCapital">初期資金（円）</label>
+      <input id="customCapital" type="number" min="10000" step="10000" value="1000000" inputmode="numeric">
+    </div>
+    <div id="chosen" class="chosen">初期資金を選択してください</div>
+    <button id="startGame" class="start-game" disabled>ゲームスタート</button>
+  </div>
+</section>
+
+<div id="game" class="hidden">
+<header class="header">
+  <div>
+    <div class="eyebrow">INVESTMENT LIFE SIMULATOR</div>
+    <h2 id="gameDate">2000/01/03</h2>
+  </div>
+  <span id="marketStatus">市場休場</span>
+</header>
+
+<main>
+<section id="home" class="screen active">
+  <h1>ホーム</h1>
+  <div class="stats">
+    <div><span>総資産</span><b id="total">¥0</b></div>
+    <div><span>現金</span><b id="cash">¥0</b></div>
+    <div><span>投資資産</span><b id="invested">¥0</b></div>
+    <div><span>本日の損益</span><b id="daily">¥0</b></div>
+  </div>
+  <div class="card overall">
+    <span>ゲーム開始からの総合損益</span>
+    <strong id="overall">¥0</strong>
+    <small id="returnRate">0.00%</small>
+  </div>
+  <div class="card">
+    <div class="title-row"><h3>📰 ニュース</h3><small>その時点の情報</small></div>
+    <p id="news">市場シミュレーションを開始しました。</p>
+  </div>
+</section>
+
+<section id="portfolio" class="screen">
+  <h1>ポートフォリオ</h1>
+  <div class="card">
+    <span>投資資産</span>
+    <strong class="big" id="portfolioTotal">¥0</strong>
+  </div>
+  <div class="card" id="holdings"><p class="muted">まだ銘柄を保有していません。</p></div>
+</section>
+
+<section id="trade" class="screen">
+  <h1>取引</h1>
+  <div class="card">
+    <div class="title-row">
+      <div><h3 id="stockName">Apple</h3><small id="ticker">AAPL</small></div>
+      <strong id="price">$3.69</strong>
+    </div>
+    <div id="stockList" class="stock-list"></div>
+  </div>
+  <div class="card">
+    <label>数量</label>
+    <input id="quantity" type="number" min="1" value="1" inputmode="numeric">
+    <div class="actions">
+      <button id="buy">買う</button>
+      <button id="sell">売る</button>
     </div>
   </div>
-</div>
+</section>
+</main>
 
-<div id="game" class="app hidden">
-  <header class="topbar">
-    <div>
-      <div class="eyebrow">INVESTMENT LIFE SIMULATOR</div>
-      <h1 id="date">2000/01/03</h1>
-      <span id="marketStatus" class="badge">市場休場</span>
-    </div>
-    <button id="resetBtn" class="ghost">リセット</button>
-  </header>
-
-  <main>
-    <section id="page-home" class="page active">
-      <section class="summary card">
-        <div><span>総資産</span><strong id="totalAssets">¥500,000</strong></div>
-        <div><span>現金</span><strong id="cash">¥500,000</strong></div>
-        <div><span>投資資産</span><strong id="invested">¥0</strong></div>
-        <div><span>本日の損益</span><strong id="dailyPnl">¥0</strong></div>
-      </section>
-
-      <section class="card total-result-card">
-        <div class="section-head">
-          <div>
-            <span class="muted">ゲーム開始からの総合損益</span>
-            <h2>総合損益</h2>
-          </div>
-          <span id="overallBadge" class="result-badge">±0円</span>
-        </div>
-        <div class="overall-value" id="overallPnl">¥0</div>
-        <div class="overall-sub" id="overallReturn">0.00%</div>
-      </section>
-
-      <section class="card news">
-        <div class="section-head"><h2>📰 NEWS</h2><span class="muted">その時点の情報</span></div>
-        <div id="newsText">市場シミュレーションを開始しました。</div>
-      </section>
-
-      <section class="card advance-card">
-        <div class="section-head"><h2>時間を進める</h2><span class="muted">仮機能</span></div>
-        <div class="advance-row">
-          <button data-step="1">1日</button>
-          <button data-step="7">1週間</button>
-          <button data-step="30">1か月</button>
-        </div>
-      </section>
-    </section>
-
-    <section id="page-trade" class="page">
-      <section class="card">
-        <div class="section-head">
-          <div>
-            <span class="muted">取引</span>
-            <h2 id="selectedName">Apple</h2>
-          </div>
-          <div class="price-box">
-            <strong id="selectedPrice">$3.69</strong>
-            <span id="selectedChange">+0.00%</span>
-          </div>
-        </div>
-        <canvas id="chart" height="190"></canvas>
-      </section>
-
-      <section class="card">
-        <div class="section-head"><h2>銘柄を選択</h2><span class="muted">7銘柄</span></div>
-        <div id="stockList" class="stock-list"></div>
-      </section>
-
-      <section class="card order-card">
-        <div class="section-head"><h2>注文</h2><span id="orderAsset">選択中: Apple</span></div>
-        <div class="order-info">
-          <div><span>現在価格</span><strong id="orderPrice">$3.69</strong></div>
-          <div><span>数量</span><input id="qty" type="number" min="1" value="1" inputmode="numeric" aria-label="数量"></div>
-        </div>
-        <div class="trade-buttons">
-          <button id="buyBtn" class="primary">買う</button>
-          <button id="sellBtn">売る</button>
-        </div>
-      </section>
-    </section>
-
-    <section id="page-assets" class="page">
-      <section class="card">
-        <div class="section-head">
-          <div><span class="muted">ポートフォリオ</span><h2>保有資産</h2></div>
-          <span id="holdingCount" class="muted">0銘柄</span>
-        </div>
-        <div class="portfolio-total">
-          <span>投資資産</span>
-          <strong id="portfolioValue">¥0</strong>
-        </div>
-        <div id="holdings" class="empty">まだ銘柄を保有していません。</div>
-      </section>
-    </section>
-  </main>
-
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-page="home"><span>⌂</span><small>ホーム</small></button>
-    <button class="nav-btn" data-page="trade"><span>↕</span><small>取引</small></button>
-    <button class="nav-btn" data-page="assets"><span>▤</span><small>資産</small></button>
-  </nav>
+<nav class="bottom-nav">
+  <button class="nav active" data-target="home"><span>⌂</span><small>ホーム</small></button>
+  <button class="nav" data-target="portfolio"><span>▤</span><small>ポートフォリオ</small></button>
+  <button class="nav" data-target="trade"><span>↕</span><small>取引</small></button>
+</nav>
 </div>
 <script src="app.js"></script>
 </body>

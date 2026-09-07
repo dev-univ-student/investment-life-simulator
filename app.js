@@ -1,227 +1,91 @@
 const stocks={
  AAPL:{name:"Apple",ticker:"AAPL",currency:"$",price:3.69,drift:.00025,vol:.018},
- MSFT:{name:"Microsoft",ticker:"MSFT",currency:"$",price:53.00,drift:.00020,vol:.017},
- AMZN:{name:"Amazon",ticker:"AMZN",currency:"$",price:4.00,drift:.00035,vol:.025},
- NVDA:{name:"NVIDIA",ticker:"NVDA",currency:"$",price:0.89,drift:.00045,vol:.032},
+ MSFT:{name:"Microsoft",ticker:"MSFT",currency:"$",price:53,drift:.0002,vol:.017},
+ AMZN:{name:"Amazon",ticker:"AMZN",currency:"$",price:4,drift:.00035,vol:.025},
+ NVDA:{name:"NVIDIA",ticker:"NVDA",currency:"$",price:.89,drift:.00045,vol:.032},
  TM:{name:"トヨタ自動車",ticker:"7203",currency:"¥",price:620,drift:.00018,vol:.017},
- SONY:{name:"ソニー",ticker:"6758",currency:"¥",price:10400,drift:.00020,vol:.020},
+ SONY:{name:"ソニー",ticker:"6758",currency:"¥",price:10400,drift:.0002,vol:.02},
  NTDOY:{name:"任天堂",ticker:"7974",currency:"¥",price:7600,drift:.00018,vol:.019}
 };
+let state=null,selected="AAPL";
+const $=id=>document.getElementById(id);
+const yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP");
+const fx=()=>106;
+const value=s=>s.currency==="¥"?s.price:s.price*fx();
 
-let state=null;
-
-function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP")}
-function pct(n){return (n>=0?"+":"")+n.toFixed(2)+"%"}
-function isWeekend(d){return d.getDay()===0||d.getDay()===6}
-function isMarketOpen(){return !isWeekend(state.date)}
-function fx(){return 106}
-function valueOf(s){return s.currency==="¥"?s.price:s.price*fx()}
-function totalInvested(){return Object.entries(state.holdings).reduce((a,[k,q])=>a+stocks[k].price*q*(stocks[k].currency==="¥"?1:fx()),0)}
-function totalAssets(){return state.cash+totalInvested()}
-
-function setupGame(initialCapital){
- state={
-   date:new Date("2000-01-03T00:00:00"),
-   cash:initialCapital,
-   initialCapital,
-   holdings:{},
-   selected:"AAPL",
-   history:{},
-   prevTotal:initialCapital
- };
- Object.keys(stocks).forEach(k=>state.history[k]=[stocks[k].price]);
- document.getElementById("startScreen").classList.add("hidden");
- document.getElementById("game").classList.remove("hidden");
- render();
-}
-
-function render(){
- const dateEl=document.getElementById("date");
- dateEl.textContent=state.date.toLocaleDateString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit"});
- const open=isMarketOpen();
- const status=document.getElementById("marketStatus");
- status.textContent=open?"市場営業日":"市場休場";
- status.style.background=open?"#183829":"#242b3d";
-
- const invested=totalInvested(), total=state.cash+invested;
- document.getElementById("totalAssets").textContent=yen(total);
- document.getElementById("cash").textContent=yen(state.cash);
- document.getElementById("invested").textContent=yen(invested);
-
- const dp=total-state.prevTotal;
- const daily=document.getElementById("dailyPnl");
- daily.textContent=yen(dp);
- daily.className=dp>=0?"up":"down";
-
- const overall=total-state.initialCapital;
- const overallRate=(overall/state.initialCapital)*100;
- const overallEl=document.getElementById("overallPnl");
- const badge=document.getElementById("overallBadge");
- const rateEl=document.getElementById("overallReturn");
- overallEl.textContent=(overall>=0?"+":"-")+yen(Math.abs(overall)).replace("¥","¥");
- rateEl.textContent=pct(overallRate);
- overallEl.className="overall-value "+(overall>=0?"up":"down");
- rateEl.className="overall-sub "+(overall>=0?"up":"down");
- badge.textContent=(overall>=0?"+":"")+yen(Math.abs(overall));
- badge.className="result-badge "+(overall>=0?"up":"down");
-
- const s=stocks[state.selected];
- document.getElementById("selectedName").textContent=s.name;
- document.getElementById("selectedPrice").textContent=s.currency+(s.currency==="¥"?Math.round(s.price).toLocaleString():s.price.toFixed(2));
- document.getElementById("orderAsset").textContent="選択中: "+s.name;
- document.getElementById("orderPrice").textContent=document.getElementById("selectedPrice").textContent;
- const hist=state.history[state.selected];
- const ch=(hist[hist.length-1]/hist[Math.max(0,hist.length-2)]-1)*100;
- const selectedChange=document.getElementById("selectedChange");
- selectedChange.textContent=pct(ch);
- selectedChange.className=ch>=0?"up":"down";
-
- document.getElementById("portfolioValue").textContent=yen(invested);
- renderStocks();
- renderHoldings();
- drawChart();
-}
-
-function renderStocks(){
- const list=document.getElementById("stockList"); list.innerHTML="";
- Object.entries(stocks).forEach(([k,s])=>{
-   const h=state.history[k], ch=(s.price/h[Math.max(0,h.length-2)]-1)*100;
-   const d=document.createElement("div");
-   d.className="stock";
-   d.onclick=()=>{state.selected=k;render()};
-   d.innerHTML=`<div><b>${s.name}</b><div class="ticker">${s.ticker}</div></div><div class="p">${s.currency}${s.currency==="¥"?Math.round(s.price).toLocaleString():s.price.toFixed(2)}</div><div class="${ch>=0?"up":"down"}">${pct(ch)}</div>`;
-   list.appendChild(d);
- });
-}
-
-function renderHoldings(){
- const box=document.getElementById("holdings");
- const entries=Object.entries(state.holdings).filter(([,q])=>q>0);
- document.getElementById("holdingCount").textContent=entries.length+"銘柄";
- if(!entries.length){box.className="empty";box.textContent="まだ銘柄を保有していません。";return}
- box.className="";box.innerHTML="";
- entries.forEach(([k,q])=>{
-   const s=stocks[k];
-   const marketValue=valueOf(s)*q;
-   const h=state.history[k];
-   const currentPerShare=valueOf(s);
-   const d=document.createElement("div");
-   d.className="holding";
-   d.innerHTML=`<div><b>${s.name}</b><div class="ticker">${q.toLocaleString()}株</div></div>
-   <div class="holding-right"><strong>${yen(marketValue)}</strong><small>${s.currency}${s.currency==="¥"?Math.round(s.price).toLocaleString():s.price.toFixed(2)}</small></div>`;
-   box.appendChild(d);
- });
-}
-
-function buy(){
- const s=stocks[state.selected],q=Math.max(1,parseInt(document.getElementById("qty").value||1));
- const cost=valueOf(s)*q;
- if(state.cash<cost){alert("現金が足りません。");return}
- state.cash-=cost;
- state.holdings[state.selected]=(state.holdings[state.selected]||0)+q;
- render();
-}
-
-function sell(){
- const s=stocks[state.selected],q=Math.max(1,parseInt(document.getElementById("qty").value||1)),have=state.holdings[state.selected]||0;
- if(have<q){alert("保有数量が足りません。");return}
- state.cash+=valueOf(s)*q;
- state.holdings[state.selected]-=q;
- render();
-}
-
-function randn(){
- let u=0,v=0;
- while(!u)u=Math.random();
- while(!v)v=Math.random();
- return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
-}
-
-function advance(days){
- state.prevTotal=totalAssets();
- for(let i=0;i<days;i++){
-   state.date.setDate(state.date.getDate()+1);
-   if(isWeekend(state.date))continue;
-   Object.entries(stocks).forEach(([k,s])=>{
-     const r=s.drift+s.vol*randn();
-     s.price=Math.max(s.price*(1+r),0.01);
-     state.history[k].push(s.price);
-   });
- }
- const headlines=[
-   "市場は静かな一日を終えました。",
-   "企業業績への関心が高まっています。",
-   "投資家の間で景気見通しを巡る議論が続いています。",
-   "株式市場では銘柄ごとの値動きが目立ちました。"
- ];
- document.getElementById("newsText").textContent=headlines[Math.floor(Math.random()*headlines.length)];
- render();
-}
-
-function drawChart(){
- const c=document.getElementById("chart");
- const ctx=c.getContext("2d");
- const dpr=devicePixelRatio||1,w=c.clientWidth,h=190;
- c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
- const data=state.history[state.selected].slice(-90);
- const min=Math.min(...data),max=Math.max(...data),range=max-min||1;
- ctx.beginPath();
- data.forEach((v,i)=>{
-   const x=i*(w-4)/(data.length-1)+2;
-   const y=h-15-(v-min)/range*(h-30);
-   i?ctx.lineTo(x,y):ctx.moveTo(x,y);
- });
- ctx.strokeStyle="#6f9cff";ctx.lineWidth=2;ctx.stroke();
- ctx.strokeStyle="#29344d";ctx.lineWidth=1;
- for(let i=1;i<4;i++){const y=i*h/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
-}
-
-document.querySelectorAll(".capital-btn").forEach(btn=>{
- btn.addEventListener("click",()=>{
-   document.querySelectorAll(".capital-btn").forEach(b=>b.classList.remove("selected"));
-   btn.classList.add("selected");
-   if(btn.dataset.custom){
-     document.getElementById("customWrap").classList.remove("hidden");
-     document.getElementById("startBtn").disabled=false;
-     document.getElementById("startBtn").dataset.mode="custom";
-   }else{
-     document.getElementById("customWrap").classList.add("hidden");
-     document.getElementById("startBtn").disabled=false;
-     document.getElementById("startBtn").dataset.mode="fixed";
-     document.getElementById("startBtn").dataset.capital=btn.dataset.capital;
-   }
- });
-});
-
-document.getElementById("startBtn").onclick=()=>{
- let capital;
- if(document.getElementById("startBtn").dataset.mode==="custom"){
-   capital=parseInt(document.getElementById("customCapital").value||0);
-   if(!Number.isFinite(capital)||capital<10000){alert("1万円以上の金額を入力してください。");return}
- }else{
-   capital=parseInt(document.getElementById("startBtn").dataset.capital);
- }
- setupGame(capital);
-};
-
-document.querySelectorAll(".nav-btn").forEach(btn=>{
+document.querySelectorAll(".capital").forEach(btn=>{
  btn.onclick=()=>{
-   const page=btn.dataset.page;
-   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-   document.getElementById("page-"+page).classList.add("active");
-   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-   btn.classList.add("active");
-   if(page==="trade")setTimeout(drawChart,0);
+  document.querySelectorAll(".capital").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
+  $("customArea").classList.add("hidden");
+  $("chosen").textContent="初期資金："+yen(+btn.dataset.capital);
+  $("startGame").disabled=false;
+  $("startGame").dataset.capital=btn.dataset.capital;
  };
 });
-
-document.getElementById("buyBtn").onclick=buy;
-document.getElementById("sellBtn").onclick=sell;
-document.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>advance(+b.dataset.step));
-document.getElementById("resetBtn").onclick=()=>{
- if(confirm("ゲームを終了して初期資金の選択に戻りますか？")){
-   location.reload();
- }
+$("customButton").onclick=()=>{
+ document.querySelectorAll(".capital").forEach(x=>x.classList.remove("selected"));
+ $("customButton").classList.add("selected");
+ $("customArea").classList.remove("hidden");
+ $("chosen").textContent="自由入力の金額で開始";
+ $("startGame").disabled=false;
+ $("startGame").dataset.capital="custom";
 };
-
-window.addEventListener("resize",drawChart);
+$("startGame").onclick=()=>{
+ let capital=$("startGame").dataset.capital==="custom"?Number($("customCapital").value):Number($("startGame").dataset.capital);
+ if(!Number.isFinite(capital)||capital<10000){alert("1万円以上を入力してください。");return}
+ state={cash:capital,initial:capital,date:new Date("2000-01-03"),holdings:{},prevTotal:capital};
+ $("startScreen").classList.add("hidden");$("game").classList.remove("hidden");render();
+};
+function invested(){return Object.entries(state.holdings).reduce((sum,[k,q])=>sum+value(stocks[k])*q,0)}
+function total(){return state.cash+invested()}
+function render(){
+ $("gameDate").textContent=state.date.toLocaleDateString("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit"});
+ $("marketStatus").textContent=[0,6].includes(state.date.getDay())?"市場休場":"市場営業日";
+ $("total").textContent=yen(total());$("cash").textContent=yen(state.cash);$("invested").textContent=yen(invested());
+ let d=total()-state.prevTotal,o=total()-state.initial,r=o/state.initial*100;
+ $("daily").textContent=(d>=0?"+":"")+yen(Math.abs(d));$("daily").className=d>=0?"up":"down";
+ $("overall").textContent=(o>=0?"+":"-")+yen(Math.abs(o));$("overall").className=o>=0?"up":"down";
+ $("returnRate").textContent=(r>=0?"+":"")+r.toFixed(2)+"%";$("returnRate").className=r>=0?"up":"down";
+ $("portfolioTotal").textContent=yen(invested());
+ const s=stocks[selected];$("stockName").textContent=s.name;$("ticker").textContent=s.ticker;
+ $("price").textContent=s.currency+(s.currency==="¥"?Math.round(s.price).toLocaleString():s.price.toFixed(2));
+ renderStocks();renderHoldings();
+}
+function renderStocks(){
+ const box=$("stockList");box.innerHTML="";
+ Object.entries(stocks).forEach(([k,s])=>{
+  const div=document.createElement("div");div.className="stock"+(k===selected?" selected":"");
+  div.onclick=()=>{selected=k;render()};
+  div.innerHTML=`<div><b>${s.name}</b><small>${s.ticker}</small></div><strong>${s.currency}${s.currency==="¥"?Math.round(s.price).toLocaleString():s.price.toFixed(2)}</strong>`;
+  box.appendChild(div);
+ });
+}
+function renderHoldings(){
+ const box=$("holdings");box.innerHTML="";
+ const entries=Object.entries(state.holdings).filter(([,q])=>q>0);
+ if(!entries.length){box.innerHTML='<p class="muted">まだ銘柄を保有していません。</p>';return}
+ entries.forEach(([k,q])=>{
+  const s=stocks[k],d=document.createElement("div");d.className="holding";
+  d.innerHTML=`<div><b>${s.name}</b><small>${q}株</small></div><div class="holding-right"><b>${yen(value(s)*q)}</b></div>`;
+  box.appendChild(d);
+ });
+}
+$("buy").onclick=()=>{
+ const q=Math.max(1,parseInt($("quantity").value)||1),s=stocks[selected],cost=value(s)*q;
+ if(state.cash<cost){alert("現金が足りません。");return}
+ state.cash-=cost;state.holdings[selected]=(state.holdings[selected]||0)+q;render();
+};
+$("sell").onclick=()=>{
+ const q=Math.max(1,parseInt($("quantity").value)||1),s=stocks[selected],have=state.holdings[selected]||0;
+ if(have<q){alert("保有数量が足りません。");return}
+ state.cash+=value(s)*q;state.holdings[selected]-=q;render();
+};
+document.querySelectorAll(".nav").forEach(btn=>{
+ btn.onclick=()=>{
+  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+  $(btn.dataset.target).classList.add("active");
+  document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
+ };
+});
+renderStocks();
