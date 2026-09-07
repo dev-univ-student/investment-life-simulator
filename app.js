@@ -1,11 +1,11 @@
 const stocks={
- AAPL:{name:"Apple",ticker:"AAPL",currency:"$",price:3.69,drift:.00025,vol:.018,divYield:.50,divPerShare:.02,per:25.0},
- MSFT:{name:"Microsoft",ticker:"MSFT",currency:"$",price:53,drift:.0002,vol:.017,divYield:.80,divPerShare:.42,per:32.0},
- AMZN:{name:"Amazon",ticker:"AMZN",currency:"$",price:4,drift:.00035,vol:.025,divYield:0,divPerShare:0,per:70.0},
- NVDA:{name:"NVIDIA",ticker:"NVDA",currency:"$",price:.89,drift:.00045,vol:.032,divYield:.05,divPerShare:.0004,per:45.0},
- TM:{name:"トヨタ自動車",ticker:"7203",currency:"¥",price:620,drift:.00018,vol:.017,divYield:2.1,divPerShare:13,per:12.0},
- SONY:{name:"ソニー",ticker:"6758",currency:"¥",price:10400,drift:.0002,vol:.02,divYield:.70,divPerShare:73,per:18.0},
- NTDOY:{name:"任天堂",ticker:"7974",currency:"¥",price:7600,drift:.00018,vol:.019,divYield:1.2,divPerShare:91,per:20.0}
+ AAPL:{name:"Apple",ticker:"AAPL",currency:"$",price:3.69,drift:.00025,vol:.018,divYield:.50,divPerShare:.02,per:25.0,pbr:8.2,eps:.15,beta:1.12,sector:"情報技術",marketCap:"約3,700億ドル"},
+ MSFT:{name:"Microsoft",ticker:"MSFT",currency:"$",price:53,drift:.0002,vol:.017,divYield:.80,divPerShare:.42,per:32.0,pbr:10.4,eps:1.66,beta:.95,sector:"情報技術",marketCap:"約5,800億ドル"},
+ AMZN:{name:"Amazon",ticker:"AMZN",currency:"$",price:4,drift:.00035,vol:.025,divYield:0,divPerShare:0,per:70.0,pbr:9.1,eps:.06,beta:1.35,sector:"一般消費財",marketCap:"約1,200億ドル"},
+ NVDA:{name:"NVIDIA",ticker:"NVDA",currency:"$",price:.89,drift:.00045,vol:.032,divYield:.05,divPerShare:.0004,per:45.0,pbr:12.0,eps:.02,beta:1.65,sector:"半導体",marketCap:"約1,500億ドル"},
+ TM:{name:"トヨタ自動車",ticker:"7203",currency:"¥",price:620,drift:.00018,vol:.017,divYield:2.1,divPerShare:13,per:12.0,pbr:1.1,eps:51.7,beta:1.05,sector:"自動車",marketCap:"約20兆円"},
+ SONY:{name:"ソニー",ticker:"6758",currency:"¥",price:10400,drift:.0002,vol:.02,divYield:.70,divPerShare:73,per:18.0,pbr:2.1,eps:577.8,beta:1.10,sector:"電気機器",marketCap:"約13兆円"},
+ NTDOY:{name:"任天堂",ticker:"7974",currency:"¥",price:7600,drift:.00018,vol:.019,divYield:1.2,divPerShare:91,per:20.0,pbr:3.8,eps:380,beta:.75,sector:"ゲーム・エンターテインメント",marketCap:"約9兆円"}
 };
 const $=id=>document.getElementById(id), yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP"), fx=()=>106, val=s=>s.currency==="¥"?s.price:s.price*fx();
 let state=null,selected="AAPL",toastTimer=null;
@@ -42,7 +42,9 @@ function invested(){return Object.entries(state.holdings).reduce((a,[k,q])=>a+va
 function total(){return state.cash+invested()}
 function render(){
  $("gameDate").textContent=state.date.toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric",weekday:"short"});
- const weekend=[0,6].includes(state.date.getDay());$("marketStatus").textContent=weekend?"市場休場":"市場営業日";
+ const weekend=[0,6].includes(state.date.getDay());
+ $("marketStatus").textContent=weekend?"市場休場":"市場営業日";
+ $("marketStatus").className=weekend?"closed":"open";
  const t=total(),i=invested(),d=t-state.prevTotal,o=t-state.initial,r=o/state.initial*100;
  $("total").textContent=yen(t);$("cash").textContent=yen(state.cash);$("invested").textContent=yen(i);
  setPnl($("daily"),d);setPnl($("overall"),o);setPnl($("returnRate"),r,true);
@@ -53,6 +55,11 @@ function render(){
  $("dividendYield").textContent=s.divYield.toFixed(2)+"%";
  $("dividendPerShare").textContent=s.currency+(s.currency==="¥"?s.divPerShare.toLocaleString():s.divPerShare.toFixed(2));
  $("per").textContent=s.per.toFixed(1)+"倍";
+ $("pbr").textContent=s.pbr.toFixed(1)+"倍";
+ $("eps").textContent=s.currency+(s.currency==="¥"?s.eps.toLocaleString():s.eps.toFixed(2));
+ $("beta").textContent=s.beta.toFixed(2);
+ $("sector").textContent=s.sector;
+ $("marketCap").textContent=s.marketCap;
  $("owned").textContent=(state.holdings[selected]||0)+"株";
  renderStocks();renderHoldings();drawChart();
 }
@@ -91,22 +98,22 @@ function renderHoldings(){
  if(!e.length){box.innerHTML='<p class="muted">まだ銘柄を保有していません。</p>';return}
  e.forEach(([k,q])=>{const s=stocks[k],d=document.createElement("div");d.className="holding";d.innerHTML=`<div><b>${s.name}</b><small>${q}株</small></div><div class="holding-right"><b>${yen(val(s)*q)}</b></div>`;box.appendChild(d)})
 }
-function showToast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),1800)}
-function showTradeMessage(msg,error=false){
- const el=$("tradeMessage");
- el.textContent=(error?"⚠️ ":"✓ ")+msg;
- el.className="trade-message"+(error?" error":"");
- el.classList.remove("hidden");
+function showToast(msg,error=false){
+ const t=$("toast");
+ t.textContent=(error?"⚠️ ":"✓ ")+msg;
+ t.classList.add("show");
+ clearTimeout(toastTimer);
+ toastTimer=setTimeout(()=>t.classList.remove("show"),10000);
 }
 $("buy").onclick=()=>{
  const q=Math.max(1,parseInt($("quantity").value)||1),s=stocks[selected],cost=val(s)*q;
- if(state.cash<cost){showTradeMessage("現金が足りません",true);showToast("現金が足りません");return}
- state.cash-=cost;state.holdings[selected]=(state.holdings[selected]||0)+q;render();showTradeMessage(`${s.name}を${q}株購入しました`);showToast(`${s.name}を${q}株購入しました`);
+ if(state.cash<cost){showToast("現金が足りません",true);return}
+ state.cash-=cost;state.holdings[selected]=(state.holdings[selected]||0)+q;render();showToast(`${s.name}を${q}株購入しました`);
 };
 $("sell").onclick=()=>{
  const q=Math.max(1,parseInt($("quantity").value)||1),s=stocks[selected],have=state.holdings[selected]||0;
- if(have<q){showTradeMessage("保有数量が足りません",true);showToast("保有数量が足りません");return}
- state.cash+=val(s)*q;state.holdings[selected]-=q;render();showTradeMessage(`${s.name}を${q}株売却しました`);showToast(`${s.name}を${q}株売却しました`);
+ if(have<q){showToast("保有数量が足りません",true);return}
+ state.cash+=val(s)*q;state.holdings[selected]-=q;render();showToast(`${s.name}を${q}株売却しました`);
 };
 function nextDay(){
  state.prevTotal=total();state.date.setDate(state.date.getDate()+1);

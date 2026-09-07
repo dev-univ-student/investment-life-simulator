@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
 <title>Investment Life Simulator</title>
-<link rel="stylesheet" href="style.css?v=0.2.6">
+<link rel="stylesheet" href="style.css?v=0.2.7">
 </head>
 <body>
 <section id="startScreen" class="start-screen">
@@ -92,6 +92,11 @@
         <div><span>配当利回り</span><b id="dividendYield">0.50%</b></div>
         <div><span>1株配当</span><b id="dividendPerShare">$0.02</b></div>
         <div><span>PER</span><b id="per">25.0倍</b></div>
+        <div><span>PBR</span><b id="pbr">8.2倍</b></div>
+        <div><span>EPS</span><b id="eps">$0.15</b></div>
+        <div><span>β（ベータ）</span><b id="beta">1.12</b></div>
+        <div><span>業種</span><b id="sector">情報技術</b></div>
+        <div><span>時価総額</span><b id="marketCap">—</b></div>
         <div><span>保有数量</span><b id="owned">0株</b></div>
       </div>
     </div>
@@ -108,7 +113,6 @@
 </section>
 </main>
 
-<div id="tradeMessage" class="trade-message hidden"></div>
 <div id="toast" class="toast"></div>
 
 <nav class="bottom-nav">
@@ -117,6 +121,6 @@
   <button class="nav" data-target="trade"><span>↕</span><small>取引</small></button>
 </nav>
 </div>
-<script src="app.js?v=0.2.6"></script>
+<script src="app.js?v=0.2.7"></script>
 </body>
 </html>
