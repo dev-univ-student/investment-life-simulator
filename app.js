@@ -10,6 +10,7 @@ const stocks={
 const $=id=>document.getElementById(id), yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP"), fx=()=>106, val=s=>s.currency==="¥"?s.price:s.price*fx();
 let state=null,selected="AAPL",toastTimer=null;
 
+function boot(){
 document.querySelectorAll(".capital").forEach(btn=>btn.onclick=()=>{
  document.querySelectorAll(".capital").forEach(x=>x.classList.remove("selected"));btn.classList.add("selected");
  $("customArea").classList.add("hidden");$("chosen").textContent="初期資金："+yen(+btn.dataset.capital);
@@ -35,7 +36,7 @@ $("startGame").onclick=()=>{
  state={cash:capital,initial:capital,date:new Date("2000-01-03"),holdings:{},prevTotal:capital,history:{}};
  Object.keys(stocks).forEach(k=>state.history[k]=[stocks[k].price]);
  $("startScreen").classList.add("hidden");$("game").classList.remove("hidden");render();
-});
+};
 
 function invested(){return Object.entries(state.holdings).reduce((a,[k,q])=>a+val(stocks[k])*q,0)}
 function total(){return state.cash+invested()}
@@ -125,3 +126,5 @@ function drawChart(){
  ctx.beginPath();data.forEach((v,i)=>{const x=2+i*(w-4)/Math.max(1,data.length-1),y=h-15-(v-min)/range*(h-30);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle="#6f9cff";ctx.lineWidth=2;ctx.stroke();
 }
 window.addEventListener("resize",drawChart);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
