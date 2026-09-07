@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
 <title>Investment Life Simulator</title>
-<link rel="stylesheet" href="style.css?v=0.2.7">
+<link rel="stylesheet" href="style.css?v=0.2.8">
 </head>
 <body>
 <section id="startScreen" class="start-screen">
@@ -83,7 +83,9 @@
         <div><h3 id="stockName">Apple</h3><small id="ticker">AAPL</small></div>
         <div class="price-side"><strong id="price">$3.69</strong><small id="stockChange">+0.00%</small></div>
       </div>
-      <canvas id="chart" height="190"></canvas>
+      <div class="chart-range" role="group" aria-label="チャート期間">
+<button type="button" class="range-btn active" data-range="1d">1日</button><button type="button" class="range-btn" data-range="1w">1週間</button><button type="button" class="range-btn" data-range="1m">1ヶ月</button><button type="button" class="range-btn" data-range="1y">1年</button><button type="button" class="range-btn" data-range="5y">5年</button>
+</div><canvas id="chart" height="190"></canvas>
     </div>
 
     <div class="card">
@@ -101,18 +103,12 @@
       </div>
     </div>
 
-    <div class="card">
-      <label for="quantity">数量</label>
-      <input id="quantity" type="number" min="1" value="1" inputmode="numeric">
-      <div class="actions">
-        <button id="buy">買う</button>
-        <button id="sell">売る</button>
-      </div>
-    </div>
+
   </div>
 </section>
 </main>
 
+<div id="tradeOrderBar" class="trade-order-bar hidden"><div class="order-quantity"><label for="quantity">数量</label><input id="quantity" type="number" min="1" value="1" inputmode="numeric"></div><button id="sell" class="order-sell" type="button">売る</button><button id="buy" class="order-buy" type="button">買う</button></div>
 <div id="toast" class="toast"></div>
 
 <nav class="bottom-nav">
@@ -121,6 +117,6 @@
   <button class="nav" data-target="trade"><span>↕</span><small>取引</small></button>
 </nav>
 </div>
-<script src="app.js?v=0.2.7"></script>
+<script src="app.js?v=0.2.8"></script>
 </body>
 </html>

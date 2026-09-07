@@ -8,7 +8,7 @@ const stocks={
  NTDOY:{name:"任天堂",ticker:"7974",currency:"¥",price:7600,drift:.00018,vol:.019,divYield:1.2,divPerShare:91,per:20.0,pbr:3.8,eps:380,beta:.75,sector:"ゲーム・エンターテインメント",marketCap:"約9兆円"}
 };
 const $=id=>document.getElementById(id), yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP"), fx=()=>106, val=s=>s.currency==="¥"?s.price:s.price*fx();
-let state=null,selected="AAPL",toastTimer=null;
+let state=null,selected="AAPL",toastTimer=null,chartRange="1d";
 
 function boot(){
 document.querySelectorAll(".capital").forEach(btn=>btn.onclick=()=>{
@@ -124,14 +124,10 @@ function nextDay(){
  render();
 }
 $("nextDay").onclick=nextDay;
-document.querySelectorAll(".nav").forEach(btn=>btn.onclick=()=>{document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(btn.dataset.target).classList.add("active");document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));btn.classList.add("active");setTimeout(drawChart,0)});
+document.querySelectorAll(".nav").forEach(btn=>btn.onclick=()=>{document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(btn.dataset.target).classList.add("active");document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));btn.classList.add("active");const detailVisible=!$("stockDetail").classList.contains("hidden");$("tradeOrderBar").classList.toggle("hidden",!(btn.dataset.target==="trade"&&detailVisible));setTimeout(drawChart,0)});
+document.querySelectorAll(".range-btn").forEach(btn=>btn.onclick=()=>{chartRange=btn.dataset.range;document.querySelectorAll(".range-btn").forEach(x=>x.classList.toggle("active",x===btn));drawChart();});
 
-function drawChart(){
- if(!state)return;const c=$("chart");const ctx=c.getContext("2d"),dpr=devicePixelRatio||1,w=c.clientWidth,h=190;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
- const data=state.history[selected]||[stocks[selected].price],min=Math.min(...data),max=Math.max(...data),range=max-min||1;
- ctx.strokeStyle="#29344d";ctx.lineWidth=1;for(let i=1;i<4;i++){const y=i*h/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
- ctx.beginPath();data.forEach((v,i)=>{const x=2+i*(w-4)/Math.max(1,data.length-1),y=h-15-(v-min)/range*(h-30);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle="#6f9cff";ctx.lineWidth=2;ctx.stroke();
-}
+function drawChart(){if(!state)return;const c=$("chart");if(!c||$("stockDetail").classList.contains("hidden"))return;const ctx=c.getContext("2d"),dpr=devicePixelRatio||1,w=c.clientWidth,h=190;c.width=Math.max(1,w*dpr);c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);const full=state.history[selected]||[stocks[selected].price];const points={"1d":2,"1w":7,"1m":30,"1y":365,"5y":1825}[chartRange]||2;const data=full.slice(Math.max(0,full.length-points));const min=Math.min(...data),max=Math.max(...data),range=max-min||1;ctx.strokeStyle="#29344d";ctx.lineWidth=1;for(let i=1;i<4;i++){const y=i*h/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.beginPath();data.forEach((v,i)=>{const x=2+i*(w-4)/Math.max(1,data.length-1),y=h-15-(v-min)/range*(h-30);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle="#6f9cff";ctx.lineWidth=2;ctx.stroke();}
 window.addEventListener("resize",drawChart);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
