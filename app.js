@@ -16,10 +16,19 @@ document.querySelectorAll(".capital").forEach(btn=>btn.onclick=()=>{
  $("startGame").disabled=false;$("startGame").dataset.capital=btn.dataset.capital;
 });
 $("customButton").onclick=()=>{
- document.querySelectorAll(".capital").forEach(x=>x.classList.remove("selected"));$("customButton").classList.add("selected");
- $("customArea").classList.remove("hidden");$("chosen").textContent="自由入力の金額で開始";
- $("startGame").disabled=false;$("startGame").dataset.capital="custom";
+ document.querySelectorAll(".capital").forEach(x=>x.classList.remove("selected"));
+ $("customButton").classList.add("selected");
+ $("customArea").classList.remove("hidden");
+ $("chosen").textContent="自由入力の金額で開始";
+ $("startGame").disabled=false;
+ $("startGame").dataset.capital="custom";
 };
+$("customCapital").addEventListener("input",()=>{
+ if($("customButton").classList.contains("selected")){
+   const n=Number($("customCapital").value);
+   $("chosen").textContent=n>=10000?"初期資金："+yen(n):"1万円以上を入力してください";
+ }
+});
 $("startGame").onclick=()=>{
  const capital=$("startGame").dataset.capital==="custom"?Number($("customCapital").value):Number($("startGame").dataset.capital);
  if(!Number.isFinite(capital)||capital<10000){alert("1万円以上を入力してください。");return}
